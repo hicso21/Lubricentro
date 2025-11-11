@@ -1,4 +1,4 @@
-import { MobileSidebar } from "./sidebar";
+import { MobileSidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wifi, WifiOff, RefreshCw, Scan } from "lucide-react";

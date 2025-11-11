@@ -1,5 +1,5 @@
-import { demoProducts } from "./demo-data";
-import { createClient } from "./supabase/client";
+import { demoProducts } from "@/lib/demo-data";
+import { createClient } from "@/lib/supabase/client";
 import type {
   Product,
   ProductStats,

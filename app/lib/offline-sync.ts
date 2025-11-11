@@ -1,4 +1,4 @@
-import type { Product, Sale, PurchaseOrder } from "./types";
+import type { Product, Sale, PurchaseOrder } from "@/lib/types";
 
 const STORAGE_KEYS = {
   PRODUCTS: "lubricentro_products",

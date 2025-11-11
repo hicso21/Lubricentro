@@ -1,5 +1,3 @@
-'use client'
-
 import { createContext, useState, useCallback, ReactNode } from 'react'
 
 export interface StorageContextType {

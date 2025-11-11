@@ -1,4 +1,4 @@
-import { Sale } from "./types";
+import { Sale } from "@/lib/types";
 
 export function generateTicket(products: Sale[]): void {
   const date: string = new Date().toLocaleDateString("es-AR");

@@ -1,8 +1,8 @@
 import { useStorage } from "@/hooks/use-storage";
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { Header } from "./header";
-import { Sidebar } from "./sidebar";
+import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

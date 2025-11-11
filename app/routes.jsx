@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import DashboardPage from "./routes/Dashboard";
-import InventoryPage from "./routes/Inventory";
-import SalesPage from "./routes/Sales";
-import CategoriesPage from "./routes/Categories";
-import AlertsPage from "./routes/Alerts";
-import SettingsPage from "./routes/Settings";
+import DashboardPage from "@/routes/Dashboard";
+import InventoryPage from "@/routes/Inventory";
+import SalesPage from "@/routes/Sales";
+import CategoriesPage from "@/routes/Categories";
+import AlertsPage from "@/routes/Alerts";
+import SettingsPage from "@/routes/Settings";
 import { LoginForm } from "@/components/auth/login-form";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import ProtectedRoute from "@/routes/ProtectedRoute";
 
 export default function AppRoutes() {
   return (

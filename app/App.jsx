@@ -1,8 +1,7 @@
-import "./globals.css";
-import DashboardLayout from "./components/layout/dashboard-layout";
+import "@/globals.css";
 import { StorageProvider } from "@/context/storage-context";
 import { BrowserRouter } from "react-router-dom";
-import AppRoutes from "./routes";
+import AppRoutes from "@/routes";
 
 export default function App() {
   return (
