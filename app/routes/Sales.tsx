@@ -77,7 +77,6 @@ export default function SalesPage() {
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [pendingSalesCount, setPendingSalesCount] = useState(0);
   const [saleNumber, setSaleNumber] = useState(Date.now().toString());
-  const [itemsOnSale, setItemsOnSale] = useState([]);
 
   const { toast } = useToast();
 

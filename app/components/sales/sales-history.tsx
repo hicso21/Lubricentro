@@ -27,8 +27,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Receipt, Calendar, Trash2, Loader2 } from "lucide-react";
+import {
+  Search,
+  Receipt,
+  Calendar,
+  Trash2,
+  Loader2,
+  Printer,
+} from "lucide-react";
 import type { Sale, Product } from "@/lib/types";
+import { generateTicket } from "@/lib/ticket-generator";
+
+interface SaleCompletionData {
+  created_at: string;
+  items: Array<{
+    created_at: string;
+    customer_email: string;
+    customer_name: string;
+    discount_amount: number;
+    final_amount: number;
+    id: string;
+    notes: string;
+    payment_method: string;
+    product_barcode: string;
+    product_id: string;
+    product_name: string;
+    quantity: number;
+    sale_date: string;
+    sale_number: string;
+    total: null;
+    total_amount: number;
+    unit_price: number;
+    updated_at: string;
+  }>;
+  sale_number: string;
+  status: string;
+  total: number;
+}
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -102,6 +137,35 @@ export function SalesHistory({
 
   const handleDeleteClick = (saleNumber: string) => {
     setSaleToDelete(saleNumber);
+  };
+
+  const handlePrint = (saleData: SaleCompletionData) => {
+    console.log("saleData", saleData);
+    const ticketSales: Sale[] = saleData.items.map((item) => ({
+      sale_number: item.sale_number,
+      product_id: item.id || "",
+      product_barcode: item.product_barcode,
+      product_name: item.product_name || "",
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total_amount: item.quantity * item.unit_price,
+      discount_amount: item.discount_amount
+        ? item.discount_amount / saleData.items.length
+        : 0, // Distribuir descuento proporcionalmente
+      final_amount:
+        item.quantity * item.unit_price -
+        (item.discount_amount ? item.discount_amount / saleData.items.length : 0),
+      payment_method: item.payment_method || "cash",
+      customer_name: item.customer_name,
+      customer_email: item.customer_email,
+      notes: item.notes,
+      sale_date: item?.sale_date,
+      total: item.quantity * item.unit_price,
+    }));
+
+    console.log(ticketSales)
+
+    generateTicket(ticketSales);
   };
 
   const handleDeleteConfirm = async () => {
@@ -233,6 +297,14 @@ export function SalesHistory({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePrint(group)}
+                          className="h-8 w-8 p-0 hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

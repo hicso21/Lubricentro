@@ -2175,19 +2175,19 @@ export class ProductService {
       const salesGrowth =
         yesterdayStats.sales > 0
           ? ((todayStats.sales - yesterdayStats.sales) / yesterdayStats.sales) *
-          100
+            100
           : todayStats.sales > 0
-            ? 100
-            : 0;
+          ? 100
+          : 0;
 
       const revenueGrowth =
         yesterdayStats.revenue > 0
           ? ((todayStats.revenue - yesterdayStats.revenue) /
-            yesterdayStats.revenue) *
-          100
+              yesterdayStats.revenue) *
+            100
           : todayStats.revenue > 0
-            ? 100
-            : 0;
+          ? 100
+          : 0;
 
       const comparison = {
         today: todayStats,
@@ -2299,6 +2299,87 @@ export class ProductService {
     } catch (error) {
       console.error("Error en deleteCategory:", error);
       return { data: null, error };
+    }
+  }
+
+  /**
+   * DELETE - Eliminar todos los productos sin categoría (category = null)
+   * Útil para limpieza de datos y mantenimiento del inventario
+   */
+  static async deleteProductsWithoutCategory(): Promise<{
+    success: boolean;
+    deletedCount: number;
+    error: unknown;
+  }> {
+    console.log("=== DELETE PRODUCTS WITHOUT CATEGORY DEBUG ===");
+
+    if (isDemoMode) {
+      const productsWithoutCategory = demoProducts.filter(
+        (p) => !p.category || p.category === ""
+      );
+      console.log(
+        `✅ Productos sin categoría eliminados en modo demo: ${productsWithoutCategory.length}`
+      );
+      return {
+        success: true,
+        deletedCount: productsWithoutCategory.length,
+        error: null,
+      };
+    }
+
+    try {
+      // Verificar autenticación
+      const { user, error: authError } = await this.verifyAuth();
+      if (authError || !user) {
+        return { success: false, deletedCount: 0, error: authError };
+      }
+
+      const supabase = this.getSupabase();
+
+      // 1. Primero, obtener todos los productos sin categoría para contar
+      const { data: productsToDelete, error: fetchError } = await supabase
+        .from("products")
+        .select("id, name, barcode")
+        .is("category", null);
+
+      if (fetchError) {
+        console.error("Error obteniendo productos sin categoría:", fetchError);
+        return { success: false, deletedCount: 0, error: fetchError };
+      }
+
+      if (!productsToDelete || productsToDelete.length === 0) {
+        console.log("✅ No hay productos sin categoría para eliminar");
+        return { success: true, deletedCount: 0, error: null };
+      }
+
+      const countToDelete = productsToDelete.length;
+      console.log(
+        `Encontrados ${countToDelete} productos sin categoría para eliminar:`,
+        productsToDelete.map((p) => ({
+          id: p.id,
+          name: p.name,
+          barcode: p.barcode,
+        }))
+      );
+
+      // 2. Eliminar todos los productos sin categoría
+      const { error: deleteError } = await supabase
+        .from("products")
+        .delete()
+        .is("category", null);
+
+      if (deleteError) {
+        console.error("Error eliminando productos sin categoría:", deleteError);
+        return { success: false, deletedCount: 0, error: deleteError };
+      }
+
+      console.log(
+        `✅ ${countToDelete} productos sin categoría eliminados exitosamente`
+      );
+      return { success: true, deletedCount: countToDelete, error: null };
+    } catch (error) {
+      console.error("Error en deleteProductsWithoutCategory:", error);
+      return { success: false, deletedCount: 0, error };
     }
   }
 }
