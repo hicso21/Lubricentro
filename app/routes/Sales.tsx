@@ -25,6 +25,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SaleDialog } from "@/components/sales/sale-dialog";
 import { SalesHistory } from "@/components/sales/sales-history";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +84,9 @@ export default function SalesPage() {
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [pendingSalesCount, setPendingSalesCount] = useState(0);
   const [saleNumber, setSaleNumber] = useState(Date.now().toString());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [monthTotal, setMonthTotal] = useState(0);
 
   const { toast } = useToast();
 
@@ -106,6 +116,10 @@ export default function SalesPage() {
   useEffect(() => {
     filterProducts();
   }, [products, searchQuery]);
+
+  useEffect(() => {
+    loadMonthSales(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -206,7 +220,7 @@ export default function SalesPage() {
       const { data: weekSales, error: weekError } =
         await ProductService.getSalesByDateRange(
           weekStart.toISOString(),
-          new Date().toISOString()
+          new Date().toISOString(),
         );
 
       // Obtener ventas del mes
@@ -215,7 +229,7 @@ export default function SalesPage() {
       const { data: monthSales, error: monthError } =
         await ProductService.getSalesByDateRange(
           monthStart.toISOString(),
-          new Date().toISOString()
+          new Date().toISOString(),
         );
 
       // Calcular totales
@@ -242,6 +256,50 @@ export default function SalesPage() {
     }
   };
 
+  const getMonthName = (monthIndex: number) => {
+    const months = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    return months[monthIndex];
+  };
+
+  const loadMonthSales = async (month: number, year: number) => {
+    try {
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+
+      const { data: monthSales, error } =
+        await ProductService.getSalesByDateRange(
+          monthStart.toISOString(),
+          monthEnd.toISOString(),
+        );
+
+      if (error) {
+        console.error("Error loading month sales:", error);
+        return;
+      }
+
+      const total =
+        monthSales?.reduce((sum, sale) => sum + (sale.final_amount || 0), 0) ||
+        0;
+
+      setMonthTotal(total);
+    } catch (error) {
+      console.error("Error loading month sales:", error);
+    }
+  };
+
   const filterProducts = () => {
     if (!searchQuery) {
       setFilteredProducts(products.slice(0, 10));
@@ -252,7 +310,7 @@ export default function SalesPage() {
       (product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.barcode.includes(searchQuery)
+        product.barcode.includes(searchQuery),
     );
 
     setFilteredProducts(filtered.slice(0, 10));
@@ -270,7 +328,7 @@ export default function SalesPage() {
       for (const item of saleData.items) {
         if (item.product.stock < item.quantity) {
           throw new Error(
-            `Stock insuficiente para ${item.product.name}. Disponible: ${item.product.stock}, Requerido: ${item.quantity}`
+            `Stock insuficiente para ${item.product.name}. Disponible: ${item.product.stock}, Requerido: ${item.quantity}`,
           );
         }
       }
@@ -336,7 +394,7 @@ export default function SalesPage() {
   const processSaleWithSupabase = async (
     saleData: SaleCompletionData,
     saleDate: string,
-    saleNumber: string
+    saleNumber: string,
   ) => {
     if (saleData.items.length > 1) {
       const saleItems = saleData.items.map((item) => ({
@@ -359,14 +417,14 @@ export default function SalesPage() {
           customer_email: saleData.customer_email,
           payment_method: saleData.payment_method || "cash",
           notes: saleData.notes,
-        }
+        },
       );
 
       if (error instanceof Error) {
         throw new Error(
           `Error al registrar venta múltiple: ${
             error?.message || "Error desconocido"
-          }`
+          }`,
         );
       }
     } else {
@@ -389,14 +447,14 @@ export default function SalesPage() {
       };
 
       const { data, error } = await ProductService.createSale(
-        saleRecord as Sale
+        saleRecord as Sale,
       );
 
       if (error) {
         throw new Error(
           `Error al registrar venta: ${
             (error as any).message || "Error desconocido"
-          }`
+          }`,
         );
       }
     }
@@ -405,7 +463,7 @@ export default function SalesPage() {
   const processSaleOffline = async (
     saleData: SaleCompletionData,
     saleDate: string,
-    saleNumber: string
+    saleNumber: string,
   ) => {
     for (const item of saleData.items) {
       const totalAmount = item.quantity * item.unit_price;
@@ -440,7 +498,7 @@ export default function SalesPage() {
   const updateLocalState = (
     saleData: SaleCompletionData,
     saleDate: string,
-    saleNumber: string
+    saleNumber: string,
   ) => {
     const newSales: Sale[] = saleData.items.map((item, index) => ({
       id: `temp_${Date.now()}_${index}`,
@@ -468,13 +526,13 @@ export default function SalesPage() {
     setProducts((prev) =>
       prev.map((p) => {
         const saleItem = saleData.items.find(
-          (item) => item.product.id === p.id
+          (item) => item.product.id === p.id,
         );
         if (saleItem) {
           return { ...p, stock: p.stock - saleItem.quantity };
         }
         return p;
-      })
+      }),
     );
   };
 
@@ -496,7 +554,7 @@ export default function SalesPage() {
         } catch (syncError) {
           console.error(
             `Error sincronizando venta ${sale.sale_number}:`,
-            syncError
+            syncError,
           );
         }
       }
@@ -528,9 +586,8 @@ export default function SalesPage() {
 
     try {
       // Usar la nueva función del ProductService
-      const { success, error } = await ProductService.deleteSaleBySaleNumber(
-        saleNumber
-      );
+      const { success, error } =
+        await ProductService.deleteSaleBySaleNumber(saleNumber);
 
       if (!success || error) {
         throw error instanceof Error
@@ -672,14 +729,47 @@ export default function SalesPage() {
 
         <Card className="racing-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Este Mes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Ventas por Mes
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              ${salesStats.monthTotal.toLocaleString()}
+              ${monthTotal.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Mes actual</p>
+            <div className="mt-2">
+              <Select
+                value={`${selectedYear}-${selectedMonth}`}
+                onValueChange={(value) => {
+                  const [year, month] = value.split("-").map(Number);
+                  setSelectedYear(year);
+                  setSelectedMonth(month);
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Generar últimos 12 meses */}
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - i);
+                    const month = date.getMonth();
+                    const year = date.getFullYear();
+
+                    return (
+                      <SelectItem
+                        key={`${year}-${month}`}
+                        value={`${year}-${month}`}
+                      >
+                        {getMonthName(month)} {year}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 

@@ -11,11 +11,11 @@ export function generateTicket(products: Sale[]): void {
 
   const total: number = products.reduce(
     (acc, p) => acc + p.unit_price * p.quantity,
-    0
+    0,
   );
   const totalDiscount = products.reduce(
     (acc, p) => acc + (p?.discount_amount || 0),
-    0
+    0,
   );
 
   const paymentMethodLabels: Record<string, string> = {
@@ -32,7 +32,7 @@ export function generateTicket(products: Sale[]): void {
     <title>Factura ${saleNumber}</title>
     <style>
       body {
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
         font-size: 12px;
         color: #000;
         margin: 0;
@@ -76,7 +76,8 @@ export function generateTicket(products: Sale[]): void {
         border-collapse: collapse;
         margin-top: 6px;
       }
-      th, td {
+      th,
+      td {
         border-bottom: 1px dotted #999;
         text-align: left;
         padding: 4px;
@@ -106,8 +107,14 @@ export function generateTicket(products: Sale[]): void {
         padding-top: 6px;
       }
       @media print {
-        body { margin: 0; padding: 0; }
-        .invoice { width: 100%; border: none; }
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        .invoice {
+          width: 100%;
+          border: none;
+        }
       }
     </style>
   </head>
@@ -119,17 +126,21 @@ export function generateTicket(products: Sale[]): void {
           <p>MARIA FERNANDA DELAFENETRE</p>
           <p>27-28742347-6</p>
           <p>Esq 39 y 28</p>
+          <p style="font-size: 125%; font-weight: 700;">Solicita tu service al 2262 649919 o al 2262 662525</p>
         </div>
-        <div class="column" style="text-align: right;">
+        <div class="column" style="text-align: right">
           <p><strong>Factura C</strong></p>
           <p><strong>N°:</strong> ${saleNumber}</p>
           <p><strong>Fecha de Emisión:</strong> ${date}</p>
           <p><strong>Cliente:</strong> ${customerName}</p>
+          <p><strong>Retira:</strong> <b style="color: transparent;">Nombre, Nombre, Apellido</b></p>
           <p><strong>CUIT:</strong> ${customerCuit}</p>
           <p><strong>Condición de Venta:</strong> Contado</p>
-          <p><strong>Método de Pago:</strong> ${
-            paymentMethodLabels[paymentMethod]
-          }</p>
+          <p>
+            <strong>Método de Pago:</strong> ${
+              paymentMethodLabels[paymentMethod]
+            }
+          </p>
         </div>
       </div>
 
@@ -145,14 +156,15 @@ export function generateTicket(products: Sale[]): void {
         ${products
           .map(
             (p) => `
-          <tr>
-            <td>${p.product_name}</td>
-            <td class="right">${p.quantity}</td>
-            <td class="right">$${p.unit_price.toLocaleString()}</td>
-            <td class="right">$${(
-              p.unit_price * p.quantity
-            ).toLocaleString()}</td>
-          </tr>`
+        <tr>
+          <td>${p.product_name}</td>
+          <td class="right">${p.quantity}</td>
+          <td class="right">$${p.unit_price.toLocaleString()}</td>
+          <td class="right">
+            $${(p.unit_price * p.quantity).toLocaleString()}
+          </td>
+        </tr>
+        `,
           )
           .join("")}
       </table>
@@ -161,12 +173,18 @@ export function generateTicket(products: Sale[]): void {
         <div><span>Subtotal:</span><span>$${total.toLocaleString()}</span></div>
         ${
           totalDiscount > 0
-            ? `<div><span>Descuento:</span><span>-$${totalDiscount.toLocaleString()}</span></div>`
+            ? `
+        <div>
+          <span>Descuento:</span
+          ><span>-$${totalDiscount.toLocaleString()}</span>
+        </div>
+        `
             : ""
         }
-        <div><strong>Total:</strong><strong>$${(
-          total - totalDiscount
-        ).toLocaleString()}</strong></div>
+        <div>
+          <strong>Total:</strong
+          ><strong>$${(total - totalDiscount).toLocaleString()}</strong>
+        </div>
       </div>
 
       <div class="footer">
@@ -175,7 +193,7 @@ export function generateTicket(products: Sale[]): void {
       </div>
     </div>
   </body>
-  </html>
+</html>
   `;
 
   const newWindow = window.open("", "_blank");
