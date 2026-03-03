@@ -38,11 +38,12 @@ export default function InventoryPage() {
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
+    [],
   );
   const [stats, setStats] = useState<InventoryStats>({
     totalProducts: 0,
     totalValue: 0,
+    totalCostValue: 0,
     lowStockCount: 0,
     categories: [],
   });
@@ -75,13 +76,13 @@ export default function InventoryPage() {
 
     window.addEventListener(
       "barcodeScanned",
-      handleBarcodeScanned as EventListener
+      handleBarcodeScanned as EventListener,
     );
 
     return () => {
       window.removeEventListener(
         "barcodeScanned",
-        handleBarcodeScanned as EventListener
+        handleBarcodeScanned as EventListener,
       );
     };
   }, [products, toast]);
@@ -111,7 +112,7 @@ export default function InventoryPage() {
               totalValue: statsResult.data.totalInventoryValue,
               lowStockCount: statsResult.data.lowStockCount,
               categories: statsResult.data.categoryDistribution.map(
-                (cat) => cat.category
+                (cat) => cat.category,
               ),
               totalInventoryValue: statsResult.data.totalInventoryValue,
               totalCostValue: statsResult.data.totalCostValue,
@@ -166,10 +167,10 @@ export default function InventoryPage() {
     const totalProducts = productList.length;
     const totalValue = productList.reduce(
       (sum, product) => sum + product.price * product.stock,
-      0
+      0,
     );
     const lowStockCount = productList.filter(
-      (p) => p.stock <= p.min_stock
+      (p) => p.stock <= p.min_stock,
     ).length;
     const categories = [
       ...new Set(productList.map((p) => p.category).filter(Boolean)),
@@ -192,13 +193,13 @@ export default function InventoryPage() {
           product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.barcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.supplier?.toLowerCase().includes(searchQuery.toLowerCase())
+          product.supplier?.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
     if (selectedCategory !== "all") {
       filtered = filtered.filter(
-        (product) => product.category === selectedCategory
+        (product) => product.category === selectedCategory,
       );
     }
 
@@ -206,7 +207,7 @@ export default function InventoryPage() {
   };
 
   const handleProductSave = async (
-    productData: Omit<Product, "id" | "created_at" | "updated_at">
+    productData: Omit<Product, "id" | "created_at" | "updated_at">,
   ) => {
     try {
       const safeProductData = {
@@ -219,12 +220,12 @@ export default function InventoryPage() {
         if (OfflineSync.isOnline()) {
           const { data, error } = await ProductService.updateProduct(
             editingProduct.id!,
-            safeProductData
+            safeProductData,
           );
           if (data && !error) {
             // Calcular el nuevo array de productos
             const updatedProducts = products.map((p) =>
-              p.id === editingProduct.id ? data : p
+              p.id === editingProduct.id ? data : p,
             );
 
             // Actualizar estado y storage
@@ -245,7 +246,7 @@ export default function InventoryPage() {
           };
 
           const updatedProducts = products.map((p) =>
-            p.id === editingProduct.id ? updatedProduct : p
+            p.id === editingProduct.id ? updatedProduct : p,
           );
 
           setProducts(updatedProducts);
@@ -260,9 +261,8 @@ export default function InventoryPage() {
       } else {
         // ===== CREATE NEW PRODUCT =====
         if (OfflineSync.isOnline()) {
-          const { data, error } = await ProductService.createProduct(
-            safeProductData
-          );
+          const { data, error } =
+            await ProductService.createProduct(safeProductData);
           if (data && !error) {
             const updatedProducts = [data, ...products];
 
@@ -319,7 +319,7 @@ export default function InventoryPage() {
     try {
       if (OfflineSync.isOnline()) {
         const { success, error } = await ProductService.deleteProduct(
-          product.id!
+          product.id!,
         );
         if (success && !error) {
           const updatedProducts = products.filter((p) => p.id !== product.id);
@@ -396,7 +396,7 @@ export default function InventoryPage() {
               {stats.totalProducts}
             </div>
             <p className="text-xs text-muted-foreground">
-              En {stats.categories.length} categorías
+              En {categories.length} categorías
             </p>
           </CardContent>
         </Card>
@@ -411,7 +411,7 @@ export default function InventoryPage() {
               ${stats.totalValue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Valor del inventario
+              ${stats.totalCostValue?.toLocaleString()} en costo
             </p>
           </CardContent>
         </Card>
@@ -433,14 +433,31 @@ export default function InventoryPage() {
 
         <Card className="racing-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categorías</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Valor Por Categoría
+            </CardTitle>
             <Filter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {categories.length}
+              $
+              {filteredProducts
+                .reduce((acc, curr) => {
+                  acc += curr.price * curr.stock;
+                  return acc;
+                }, 0)
+                .toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Tipos de productos</p>
+            <p className="text-xs text-muted-foreground">
+              $
+              {filteredProducts
+                .reduce((acc, curr) => {
+                  acc += curr.cost * curr.stock;
+                  return acc;
+                }, 0)
+                .toLocaleString()}
+              {" en costo"}
+            </p>
           </CardContent>
         </Card>
       </div>
